@@ -1,0 +1,18 @@
+/* src/styles.css */
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.footer {
+  margin-top: auto;
+}
+.navbar-brand img {
+  filter: drop-shadow(0 1px 2px #4caf50);
+}
+.table th, .table td {
+  vertical-align: middle;
+}
+.text-muted {
+  color: #888 !important;
+} 
