@@ -14,7 +14,10 @@ const uploadForm = document.getElementById('uploadForm');
 const standardsTable = document.getElementById('standardsTable');
 const adminStatusMsg = document.getElementById('adminStatusMsg');
 const modalStatusMsg = document.getElementById('modalStatusMsg');
+const editForm = document.getElementById('editForm');
+const editModalStatusMsg = document.getElementById('editModalStatusMsg');
 let uploadModal;
+let editModal;
 
 // Toast notification logic
 function showToast(message, type = 'success') {
@@ -105,6 +108,7 @@ logoutBtn.addEventListener('click', async () => {
 // Modal logic
 if (typeof bootstrap !== 'undefined') {
   uploadModal = new bootstrap.Modal(document.getElementById('uploadModal'));
+  editModal = new bootstrap.Modal(document.getElementById('editModal'));
 }
 if (openUploadModalBtn) {
   openUploadModalBtn.addEventListener('click', () => {
@@ -184,11 +188,103 @@ async function fetchAndRenderStandards() {
           <td>${s.title}</td>
           <td>${s.year}</td>
           <td>${s.file_url ? `<a href="${s.file_url}" target="_blank" class="btn btn-sm btn-success">View PDF</a>` : '<span class="text-muted">No file</span>'}</td>
+          <td>
+            <div class="d-flex gap-2 justify-content-center">
+              <button class="btn btn-outline-warning btn-sm rounded-circle edit-btn" data-id="${s.id}" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-outline-danger btn-sm rounded-circle delete-btn" data-id="${s.id}" data-file-url="${s.file_url}" title="Delete">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
         </tr>
       `;
     });
   });
   tbody.innerHTML = html;
+  // Attach event listeners for edit and delete
+  tbody.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => openEditModal(btn.dataset.id));
+  });
+  tbody.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => handleDelete(btn.dataset.id, btn.dataset.fileUrl));
+  });
+}
+
+async function openEditModal(id) {
+  editModalStatusMsg.innerHTML = '';
+  // Fetch the standard
+  const { data, error } = await supabase.from('standards').select('*').eq('id', id).single();
+  if (error) {
+    showToast('Failed to fetch standard for editing.', 'danger');
+    return;
+  }
+  document.getElementById('editId').value = data.id;
+  document.getElementById('editCategory').value = data.category;
+  document.getElementById('editTitleNo').value = data.title_no;
+  document.getElementById('editTitle').value = data.title;
+  document.getElementById('editYear').value = data.year;
+  if (!editModal) editModal = new bootstrap.Modal(document.getElementById('editModal'));
+  editModal.show();
+}
+
+editForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('editId').value;
+  const category = document.getElementById('editCategory').value;
+  const title_no = document.getElementById('editTitleNo').value;
+  const title = document.getElementById('editTitle').value;
+  const year = parseInt(document.getElementById('editYear').value, 10);
+  const fileInput = document.getElementById('editFile');
+  const file = fileInput.files[0];
+
+  let updateObj = { category, title_no, title, year };
+
+  if (file) {
+    // Upload new file
+    const filePath = `${year}/${Date.now()}_${file.name}`;
+    const { error: uploadError } = await supabase.storage.from('standards-files').upload(filePath, file);
+    if (uploadError) {
+      editModalStatusMsg.innerHTML = `<div class="alert alert-danger">File upload failed: ${uploadError.message}</div>`;
+      showToast('File upload failed: ' + uploadError.message, 'danger');
+      return;
+    }
+    const { data: { publicUrl } } = supabase.storage.from('standards-files').getPublicUrl(filePath);
+    updateObj.file_url = publicUrl;
+  }
+
+  const { error: updateError } = await supabase.from('standards').update(updateObj).eq('id', id);
+  if (updateError) {
+    editModalStatusMsg.innerHTML = `<div class="alert alert-danger">Update failed: ${updateError.message}</div>`;
+    showToast('Update failed: ' + updateError.message, 'danger');
+    return;
+  }
+  editModalStatusMsg.innerHTML = `<div class="alert alert-success">Standard updated successfully!</div>`;
+  showToast('Standard updated successfully!', 'success');
+  if (editModal) editModal.hide();
+  fetchAndRenderStandards();
+});
+
+async function handleDelete(id, fileUrl) {
+  if (!confirm('Are you sure you want to delete this standard? This will also delete the file.')) return;
+  // Delete the file from storage if fileUrl exists
+  if (fileUrl) {
+    // Extract the path after the bucket name
+    const urlParts = fileUrl.split('/object/public/standards-files/');
+    if (urlParts.length === 2) {
+      const filePath = urlParts[1];
+      await supabase.storage.from('standards-files').remove([filePath]);
+    }
+  }
+  // Delete the record from the table
+  const { error } = await supabase.from('standards').delete().eq('id', id);
+  if (error) {
+    showToast('Delete failed: ' + error.message, 'danger');
+    return;
+  }
+  showToast('Standard deleted successfully!', 'success');
+  fetchAndRenderStandards();
 }
 
 // On page load, check session
