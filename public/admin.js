@@ -192,9 +192,9 @@ async function fetchAndRenderStandards() {
       <thead><tr>
         <th style="width: 15%">Category</th>
         <th style="width: 15%">Title No.</th>
-        <th style="width: 40%">Title</th>
-        <th style="width: 15%">File</th>
-        <th style="width: 15%">Actions</th>
+        <th style="width: 50%">Title</th>
+        <th style="width: 10%">File</th>
+        <th style="width: 10%">Actions</th>
       </tr></thead><tbody>`;
     grouped[year].forEach(s => {
       html += `<tr>
