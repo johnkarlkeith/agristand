@@ -180,14 +180,21 @@ async function fetchAndRenderStandards() {
   });
   let html = '';
   Object.keys(grouped).sort((a, b) => b - a).forEach(year => {
+    // Sort standards within each year by title_no's numeric part
+    grouped[year].sort((a, b) => {
+      const numA = Number(a.title_no.split(':')[0].split(' ').pop());
+      const numB = Number(b.title_no.split(':')[0].split(' ').pop());
+      return numB - numA; // Descending order
+    });
+    
     html += `<h5 class="mt-4">Year of Publication: <b>${year}</b></h5>`;
     html += `<div class="table-responsive"><table class="table table-striped align-middle" style="width: 100%; table-layout: fixed;">
       <thead><tr>
         <th style="width: 15%">Category</th>
         <th style="width: 15%">Title No.</th>
-        <th style="width: 45%">Title</th>
-        <th style="width: 10%">File</th>
-        <th style="width: 10%">Actions</th>
+        <th style="width: 40%">Title</th>
+        <th style="width: 15%">File</th>
+        <th style="width: 15%">Actions</th>
       </tr></thead><tbody>`;
     grouped[year].forEach(s => {
       html += `<tr>
