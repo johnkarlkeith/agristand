@@ -49,6 +49,13 @@ function renderStandards() {
   });
   let html = '';
   Object.keys(grouped).sort((a, b) => b - a).forEach(year => {
+    // Sort standards within each year by title_no's numeric part
+    grouped[year].sort((a, b) => {
+      const numA = Number(a.title_no.split(':')[0].split(' ').pop());
+      const numB = Number(b.title_no.split(':')[0].split(' ').pop());
+      return numB - numA; // Descending order
+    });
+    
     html += `<h5 class="mt-4">Year of Publication: <b>${year}</b></h5>`;
     html += `<div class="card mb-4">
       <div class="card-body p-0">
