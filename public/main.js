@@ -49,21 +49,17 @@ function renderStandards() {
   });
   let html = '';
   Object.keys(grouped).sort((a, b) => b - a).forEach(year => {
-    // Sort standards within each year by title_no's numeric part
-    grouped[year].sort((a, b) => {
-      const numA = Number(a.title_no.split(':')[0].split(' ').pop());
-      const numB = Number(b.title_no.split(':')[0].split(' ').pop());
-      return numB - numA; // Descending order
-    });
-    
     html += `<h5 class="mt-4">Year of Publication: <b>${year}</b></h5>`;
-    html += `<table class="table table-striped align-middle" style="width: 100%; table-layout: fixed;">
-      <thead><tr>
-        <th style="width: 15%">Category</th>
-        <th style="width: 15%">Title No.</th>
-        <th style="width: 50%">Title</th>
-        <th style="width: 10%">File</th>
-      </tr></thead><tbody>`;
+    html += `<div class="card mb-4">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-striped align-middle" style="width: 100%; table-layout: fixed;">
+            <thead><tr>
+              <th style="width: 15%">Category</th>
+              <th style="width: 15%">Title No.</th>
+              <th style="width: 50%">Title</th>
+              <th style="width: 10%">File</th>
+            </tr></thead><tbody>`;
     grouped[year].forEach(s => {
       html += `<tr>
         <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.category}</td>
@@ -72,7 +68,7 @@ function renderStandards() {
         <td>${s.file_url ? `<a href="${s.file_url}" target="_blank" class="btn btn-success btn-sm">View PDF</a>` : '<span class="text-muted">No file</span>'}</td>
       </tr>`;
     });
-    html += '</tbody></table>';
+    html += '</tbody></table></div></div></div>';
   });
   standardsList.innerHTML = html || '<div class="alert alert-info">No standards found.</div>';
 }
