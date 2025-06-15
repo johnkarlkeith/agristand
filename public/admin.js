@@ -79,6 +79,7 @@ async function checkSession() {
     //   showLogin();
     //   return;
     // }
+    document.getElementById('adminEmail').textContent = 'Admin';
     showAdmin();
   } else {
     showLogin();
@@ -162,13 +163,13 @@ uploadForm.addEventListener('submit', async (e) => {
 
 async function fetchAndRenderStandards() {
   const { data, error } = await supabase.from('standards').select('*').order('year', { ascending: false }).order('title_no', { ascending: true });
-  const tbody = standardsTable.querySelector('tbody');
+  const standardsList = document.getElementById('standardsList');
   if (error) {
-    tbody.innerHTML = '<tr><td colspan="5" class="text-danger">Failed to load standards.</td></tr>';
+    standardsList.innerHTML = '<div class="alert alert-danger">Failed to load standards.</div>';
     return;
   }
   if (!data || data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" class="text-muted">No standards found.</td></tr>';
+    standardsList.innerHTML = '<div class="alert alert-info">No standards found.</div>';
     return;
   }
   // Group by year
@@ -179,35 +180,41 @@ async function fetchAndRenderStandards() {
   });
   let html = '';
   Object.keys(grouped).sort((a, b) => b - a).forEach(year => {
-    html += `<tr><td colspan="5" class="bg-light fw-bold">Year: ${year}</td></tr>`;
+    html += `<h5 class="mt-4">Year of Publication: <b>${year}</b></h5>`;
+    html += `<div class="table-responsive"><table class="table table-striped align-middle" style="width: 100%; table-layout: fixed;">
+      <thead><tr>
+        <th style="width: 15%">Category</th>
+        <th style="width: 15%">Title No.</th>
+        <th style="width: 45%">Title</th>
+        <th style="width: 10%">File</th>
+        <th style="width: 10%">Actions</th>
+      </tr></thead><tbody>`;
     grouped[year].forEach(s => {
-      html += `
-        <tr>
-          <td>${s.category}</td>
-          <td>${s.title_no}</td>
-          <td>${s.title}</td>
-          <td>${s.year}</td>
-          <td>${s.file_url ? `<a href="${s.file_url}" target="_blank" class="btn btn-sm btn-success">View PDF</a>` : '<span class="text-muted">No file</span>'}</td>
-          <td>
-            <div class="d-flex gap-2 justify-content-center">
-              <button class="btn btn-outline-warning btn-sm rounded-circle edit-btn" data-id="${s.id}" title="Edit">
-                <i class="bi bi-pencil"></i>
-              </button>
-              <button class="btn btn-outline-danger btn-sm rounded-circle delete-btn" data-id="${s.id}" data-file-url="${s.file_url}" title="Delete">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </td>
-        </tr>
-      `;
+      html += `<tr>
+        <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.category}</td>
+        <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.title_no}</td>
+        <td style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.title}</td>
+        <td>${s.file_url ? `<a href="${s.file_url}" target="_blank" class="btn btn-success btn-sm">View PDF</a>` : '<span class="text-muted">No file</span>'}</td>
+        <td>
+          <div class="d-flex gap-2 justify-content-center">
+            <button class="btn btn-outline-warning btn-sm rounded-circle edit-btn" data-id="${s.id}" title="Edit">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-outline-danger btn-sm rounded-circle delete-btn" data-id="${s.id}" data-file-url="${s.file_url}" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>`;
     });
+    html += '</tbody></table></div>';
   });
-  tbody.innerHTML = html;
+  standardsList.innerHTML = html;
   // Attach event listeners for edit and delete
-  tbody.querySelectorAll('.edit-btn').forEach(btn => {
+  standardsList.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', () => openEditModal(btn.dataset.id));
   });
-  tbody.querySelectorAll('.delete-btn').forEach(btn => {
+  standardsList.querySelectorAll('.delete-btn').forEach(btn => {
     btn.addEventListener('click', () => handleDelete(btn.dataset.id, btn.dataset.fileUrl));
   });
 }
